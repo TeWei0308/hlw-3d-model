@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隧道工程三維展示</title>
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+
+    <style>
+        body { margin: 0; background-color: #1a1a1a; font-family: sans-serif; color: white; }
+        
+        /* 設定 3D 視窗大小 */
+        model-viewer {
+            width: 100%;
+            height: 100vh;
+            background-color: #222;
+        }
+
+        /* 標註點 (Hotspot) 的樣式 */
+        .Hotspot {
+            background: #fff;
+            border-radius: 32px;
+            border: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            box-sizing: border-box;
+            cursor: pointer;
+            height: 24px;
+            padding: 8px;
+            position: relative;
+            transition: opacity 0.3s;
+            width: 24px;
+        }
+
+        .Hotspot:not([data-visible]) {
+            background: transparent;
+            border: 4px solid #fff;
+            box-shadow: none;
+            height: 32px;
+            pointer-events: none;
+            width: 32px;
+        }
+
+        .Hotspot:focus {
+            border: 4px solid rgb(0, 128, 255);
+            outline: none;
+        }
+
+        .Hotspot > * {
+            opacity: 1;
+            transform: translateY(-50%);
+        }
+
+        /* 標註文字的樣式 */
+        .HotspotAnnotation {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            color: rgba(0, 0, 0, 0.8);
+            display: block;
+            font-family: Futura, Helvetica Neue, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            left: calc(100% + 12px);
+            max-width: 200px;
+            padding: 0.5em 1em;
+            position: absolute;
+            top: 50%;
+            width: max-content;
+        }
+
+        /* AR 按鈕樣式 */
+        #ar-button {
+            background-color: #fff;
+            border-radius: 4px;
+            border: none;
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #4285f4;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-title">
+        <h2 style="margin:0; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">隧道工程三維展示模型</h2>
+    </div>
+
+    <model-viewer 
+        src="Tunnel.glb" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        tone-mapping="neutral" 
+        poster="poster.webp" 
+        shadow-intensity="1">
+
+        <button class="Hotspot" slot="hotspot-1" 
+            data-position="4946.345m -587.935m -6034.207m" 
+            data-normal="-0.485m 0.773m -0.407m" 
+            data-visibility-attribute="visible">
+            <div class="HotspotAnnotation">處置隧道</div>
+        </button>
+
+        <button class="Hotspot" slot="hotspot-2" 
+            data-position="4943.630m -593.017m -6154.503m" 
+            data-normal="0.633m 0.0001m -0.773m" 
+            data-visibility-attribute="visible">
+            <div class="HotspotAnnotation">緊急隧道</div>
+        </button>
+
+        <button class="Hotspot" slot="hotspot-3" 
+            data-position="4894.773m -594.011m -5806.110m" 
+            data-normal="-0.613m -0.002m -0.789m" 
+            data-visibility-attribute="visible">
+            <div class="HotspotAnnotation">處置孔</div>
+        </button>
+
+        <div class="progress-bar hide" slot="progress-bar">
+            <div class="update-bar"></div>
+        </div>
+
+        <button slot="ar-button" id="ar-button">
+            在您的空間中查看 (AR)
+        </button>
+
+        <div id="ar-prompt">
+            <img src="https://modelviewer.dev/shared-assets/icons/hand.png">
+        </div>
+    </model-viewer>
+
+</body>
+</html>
