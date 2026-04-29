@@ -82,13 +82,17 @@
         id="tunnel-viewer"
         src="Tunnel.glb" 
         ar 
-        ar-modes="webxr scene-viewer quick-look" 
         camera-controls 
         enable-pan
-        min-camera-orbit="auto auto 0.01m" 
-        interpolation-decay="200"
+        /* 1. 防止縮過頭：將 0.01m 改為 0.5m 或 1m，這樣就不會瞬間撞進牆裡 */
+        min-camera-orbit="auto auto 0.5m" 
+        /* 2. 限制拉太遠：防止模型變成一個小點 */
+        max-camera-orbit="auto auto 50m"
+        /* 3. 提升反應速度：數值越小反應越快，100ms 比 200ms 更靈敏 */
+        interpolation-decay="100"
+        /* 4. 調整視野：讓縮放感更線性 */
+        field-of-view="30deg"
         tone-mapping="neutral" 
-        poster="poster.webp" 
         shadow-intensity="1">
 
         <button class="Hotspot" slot="hotspot-1" 
