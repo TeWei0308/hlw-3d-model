@@ -1,146 +1,111 @@
-<!DOCTYPE html>
-<html lang="zh-Hant-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隧道工程三維展示</title>
+model new
+
+model rest 'Ex_L_H2_Tunnel.f3sav'
+
+
+model config dynamic
+;model dynamic active off
+model dynamic active on ; 
+model largestrain off
+ 
+;zone face group 'base' range position-z -30. tol 0.1
+
+zone dynamic active on
+
+; 怏抬敶et肅鈭交蟡
+zone dynamic free-field on
+zone face apply quiet range position-z -30. tol 0.1
+;------------------------------------------------------
+table 'EQx_vel' import 'EQ2016_x_vel.txt'
+table 'EQy_vel' import 'EQ2016_y_vel.txt'
+table 'EQz_vel' import 'EQ2016_z_vel.txt'
+
+fish define create_stress_tables
+    local rho = 2650.0   ;; density (kg/m^3)
+    local Cs = 3500.0    ;; Vs (m/s)
+    local Cp = 6500.0    ;; Vp (m/s)
+
+    ;; --------------------
+    ;; building stress
+    local stress_EQx = table.create('stress_EQx')
+    local stress_EQy = table.create('stress_EQy')
+    local stress_EQz = table.create('stress_EQz')
     
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-
-    <style>
-        body { margin: 0; background-color: #1a1a1a; font-family: sans-serif; color: white; }
+    ;; --------------------
+    ;; transfer shear stress (X-dirdir)
+    local vel_table_x = table.find('EQx_vel')
+    local vel_table_y = table.find('EQy_vel')
+    local num_rows_x = table.size(vel_table_x)
+    
+    loop i (1, num_rows_x)
+        local time = table.x(vel_table_x, i)  ;; time 脣瘣菟
+        local vx = table.y(vel_table_x, i)
+        local vy = table.y(vel_table_y, i)
         
-        /* 設定 3D 視窗大小 */
-        model-viewer {
-            width: 100%;
-            height: 100vh;
-            background-color: #222;
-        }
+        local stress_xz = 2.0 * rho * Cs * vx
+        local stress_yz = 2.0 * rho * Cs * vy
+        
+        ;; 賣餈文謍航table(t, x) = y 止等蟡漱
+        table(stress_EQx, time) = stress_xz
+        table(stress_EQy, time) = stress_yz
 
-        /* 標註點 (Hotspot) 的樣式 */
-        .Hotspot {
-            background: #fff;
-            border-radius: 32px;
-            border: 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-            box-sizing: border-box;
-            cursor: pointer;
-            height: 24px;
-            padding: 8px;
-            position: relative;
-            transition: opacity 0.3s;
-            width: 24px;
-        }
+    end_loop
 
-        .Hotspot:not([data-visible]) {
-            background: transparent;
-            border: 4px solid #fff;
-            box-shadow: none;
-            height: 32px;
-            pointer-events: none;
-            width: 32px;
-        }
+    ;; --------------------
+    ;; transfer mormal stress (Z-dir)
+    local vel_table_z = table.find('EQz_vel')
+    local num_rows_z = table.size(vel_table_z)
 
-        .Hotspot:focus {
-            border: 4px solid rgb(0, 128, 255);
-            outline: none;
-        }
+    loop i (1, num_rows_z)
+        ;; 賣餈文謇【me 賂撥 local謕琿銵瞏擏 'local' 謚殷
+        time = table.x(vel_table_z, i)
+        
+        ;; 賣餈文謍梱瞏剜 time = table.x(vel_table_z, i)甇謒
+        
+        local vz = table.y(vel_table_z, i)   ;; vz 質縐擗虜
+        local stress_zz = 2.0 * rho * Cp * vz
+        table(stress_EQz, time) = stress_zz
+    end_loop
+end
 
-        .Hotspot > * {
-            opacity: 1;
-            transform: translateY(-50%);
-        }
+@create_stress_tables
 
-        /* 標註文字的樣式 */
-        .HotspotAnnotation {
-            background: #fff;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-            color: rgba(0, 0, 0, 0.8);
-            display: block;
-            font-family: Futura, Helvetica Neue, sans-serif;
-            font-size: 14px;
-            font-weight: 700;
-            left: calc(100% + 12px);
-            max-width: 200px;
-            padding: 0.5em 1em;
-            position: absolute;
-            top: 50%;
-            width: max-content;
-        }
+;zone face apply stress-xz table 'stress_EQx' range position-z -30. tol 0.1
+;zone face apply stress-yz table 'stress_EQy' range position-z -30. tol 0.1
+;zone face apply stress-zz table 'stress_EQz' range position-z -30. tol 0.1
+zone face apply stress-xz 1.0 table 'stress_EQx' range position-z -30. tol 0.1
+zone face apply stress-yz 1.0 table 'stress_EQy' range position-z -30. tol 0.1
+zone face apply stress-zz 1.0 table 'stress_EQz' range position-z -30. tol 0.1
 
-        /* AR 按鈕樣式 */
-        #ar-button {
-            background-color: #fff;
-            border-radius: 4px;
-            border: none;
-            position: absolute;
-            bottom: 16px;
-            right: 16px;
-            padding: 10px 20px;
-            font-size: 14px;
-            color: #4285f4;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
+; 
+; 
+model history name "time" dynamic time-total
+; 撩叟荔謍喟謜飾蹎∠X
+zone hist name "MT_R_Ax" acceleration-x gridpoint 8618171
+zone hist name "MT_S_Ax" acceleration-x gridpoint 8618074
+zone hist name "MT_C_Ax" acceleration-x gridpoint 8618053
+zone hist name "MT_I_Ax" acceleration-x gridpoint 8618150
+zone hist name "MT_R_Ay" acceleration-y gridpoint 8618171
+zone hist name "MT_S_Ay" acceleration-y gridpoint 8618074
+zone hist name "MT_C_Ay" acceleration-y gridpoint 8618053
+zone hist name "MT_I_Ay" acceleration-y gridpoint 8618150
+zone hist name "MT_R_Az" acceleration-z gridpoint 8618171
+zone hist name "MT_S_Az" acceleration-z gridpoint 8618074
+zone hist name "MT_C_Az" acceleration-z gridpoint 8618053
+zone hist name "MT_I_Az" acceleration-z gridpoint 8618150
 
-        .header-title {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body>
+zone dynamic damping hysteretic default -3.156 1.904
+;zone dynamic damping rayleigh 0.0005 2.0 stiffness
+; Solve to dynamic time 10
+;model solve time-total 7.5
+model solve time-total 6
+model save 'model_800_2016EQ_5s.f3sav'
 
-    <div class="header-title">
-        <h2 style="margin:0; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">隧道工程三維展示模型</h2>
-    </div>
 
-    <model-viewer 
-        src="Tunnel.glb" 
-        ar 
-        ar-modes="webxr scene-viewer quick-look" 
-        camera-controls 
-        tone-mapping="neutral" 
-        poster="poster.webp" 
-        shadow-intensity="1">
 
-        <button class="Hotspot" slot="hotspot-1" 
-            data-position="4946.345m -587.935m -6034.207m" 
-            data-normal="-0.485m 0.773m -0.407m" 
-            data-visibility-attribute="visible">
-            <div class="HotspotAnnotation">處置隧道</div>
-        </button>
 
-        <button class="Hotspot" slot="hotspot-2" 
-            data-position="4943.630m -593.017m -6154.503m" 
-            data-normal="0.633m 0.0001m -0.773m" 
-            data-visibility-attribute="visible">
-            <div class="HotspotAnnotation">緊急隧道</div>
-        </button>
-
-        <button class="Hotspot" slot="hotspot-3" 
-            data-position="4894.773m -594.011m -5806.110m" 
-            data-normal="-0.613m -0.002m -0.789m" 
-            data-visibility-attribute="visible">
-            <div class="HotspotAnnotation">處置孔</div>
-        </button>
-
-        <div class="progress-bar hide" slot="progress-bar">
-            <div class="update-bar"></div>
-        </div>
-
-        <button slot="ar-button" id="ar-button">
-            在您的空間中查看 (AR)
-        </button>
-
-        <div id="ar-prompt">
-            <img src="https://modelviewer.dev/shared-assets/icons/hand.png">
-        </div>
-    </model-viewer>
-
-</body>
-</html>
+; *** 移除靜力固定邊界 ***
+zone face apply velocity-x 0 range position-z -30. tol 0.1
+zone face apply velocity-y 0 range position-z -30. tol 0.1
+zone face apply velocity-z 0 range position-z -30. tol 0.1
+zone face remove velocity range position-z -30. tol 0.1
