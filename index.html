@@ -8,46 +8,65 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 
     <style>
-        body { margin: 0; background-color: #1a1a1a; font-family: sans-serif; color: white; }
+        body { margin: 0; background-color: #1a1a1a; font-family: sans-serif; color: white; overflow: hidden; }
         
         model-viewer {
             width: 100%;
             height: 100vh;
             background-color: #222;
-            /* 平滑轉動設定 */
-            --exposure: 1;
         }
 
+        /* 標註點樣式 */
         .Hotspot {
             background: #fff;
             border-radius: 32px;
             border: 0;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-            box-sizing: border-box;
             cursor: pointer;
             height: 24px;
+            width: 24px;
             padding: 8px;
             position: relative;
-            transition: opacity 0.3s;
-            width: 24px;
         }
 
         .HotspotAnnotation {
             background: #fff;
             border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-            color: rgba(0, 0, 0, 0.8);
+            color: #333;
             display: block;
-            font-family: Futura, Helvetica Neue, sans-serif;
             font-size: 14px;
             font-weight: 700;
             left: calc(100% + 12px);
-            max-width: 200px;
             padding: 0.5em 1em;
             position: absolute;
             top: 50%;
+            transform: translateY(-50%);
             width: max-content;
         }
+
+        /* 介面按鈕樣式 */
+        .header-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+
+        .btn-ui {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 4px;
+            color: #333;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+            padding: 8px 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .btn-ui:hover { background: #fff; }
 
         #ar-button {
             background-color: #fff;
@@ -57,18 +76,8 @@
             bottom: 16px;
             right: 16px;
             padding: 10px 20px;
-            font-size: 14px;
             color: #4285f4;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header-title {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            pointer-events: none;
         }
     </style>
 </head>
@@ -76,41 +85,36 @@
 
     <div class="header-title">
         <h2 style="margin:0; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">隧道工程三維展示模型</h2>
+        <button class="btn-ui" onclick="resetView()">顯示全貌 / 重置視角</button>
     </div>
 
     <model-viewer 
-          id="tunnel-viewer"
-          src="Tunnel.glb" 
-          camera-controls 
-          enable-pan
-          /* 1. 讓縮放能拉得更遠，看清全貌 */
-          max-camera-orbit="auto auto auto" 
-          /* 2. 恢復預設視野，或設為 auto */
-          field-of-view="auto"
-          /* 3. 調整平移靈敏度，方便在模型很大時移動 */
-          pan-sensitivity="10"
-    
-          /* 以下維持之前的優化 */
-          min-camera-orbit="auto auto 0.5m" 
-          interpolation-decay="100"
-          tone-mapping="neutral" 
-          shadow-intensity="1">
+        id="tunnel-viewer"
+        src="Tunnel.glb" 
+        camera-controls 
+        enable-pan
+        /* 限制縮放，防止滾輪滾過頭進入模型內部 */
+        min-camera-orbit="auto auto 0.5m" 
+        /* 允許退得足夠遠來看全貌 */
+        max-camera-orbit="auto auto 2000m"
+        /* 降低靈敏度，防止滾輪反應過於激烈 */
+        orbit-sensitivity="0.6"
+        /* 增加平移速度，適合大地尺度模型 */
+        pan-sensitivity="20"
+        interpolation-decay="100"
+        field-of-view="auto"
+        tone-mapping="neutral" 
+        shadow-intensity="1">
 
-        <button class="Hotspot" slot="hotspot-1" 
-            data-position="4946.345m -587.935m -6034.207m" 
-            data-normal="-0.485m 0.773m -0.407m">
+        <button class="Hotspot" slot="hotspot-1" data-position="4946.345m -587.935m -6034.207m" data-normal="-0.485m 0.773m -0.407m">
             <div class="HotspotAnnotation">處置隧道</div>
         </button>
 
-        <button class="Hotspot" slot="hotspot-2" 
-            data-position="4943.630m -593.017m -6154.503m" 
-            data-normal="0.633m 0.0001m -0.773m">
+        <button class="Hotspot" slot="hotspot-2" data-position="4943.630m -593.017m -6154.503m" data-normal="0.633m 0.0001m -0.773m">
             <div class="HotspotAnnotation">緊急隧道</div>
         </button>
 
-        <button class="Hotspot" slot="hotspot-3" 
-            data-position="4894.773m -594.011m -5806.110m" 
-            data-normal="-0.613m -0.002m -0.789m">
+        <button class="Hotspot" slot="hotspot-3" data-position="4894.773m -594.011m -5806.110m" data-normal="-0.613m -0.002m -0.789m">
             <div class="HotspotAnnotation">處置孔</div>
         </button>
 
@@ -121,23 +125,4 @@
         const modelViewer = document.querySelector("#tunnel-viewer");
         const hotspots = document.querySelectorAll(".Hotspot");
 
-        hotspots.forEach((hotspot) => {
-            hotspot.addEventListener('click', (event) => {
-                // 獲取標註點的座標位置
-                const position = hotspot.dataset.position;
-                
-                // 1. 將相機焦點移至標註點
-                modelViewer.cameraTarget = position;
-                
-                // 2. 拉近距離 (自動縮放)
-                // 第一、二個參數 auto 代表維持原本的角度，第三個參數 2m 代表拉近到 2 公尺距離
-                // 您可以根據模型大小調整這個 2m
-                modelViewer.cameraOrbit = "auto auto 2m";
-                
-                console.log("已聚焦至：" + position);
-            });
-        });
-    </script>
-
-</body>
-</html>
+        // 點擊標註點：
