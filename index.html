@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隧道工程三維展示</title>
+    <title>隧道工程三維展示系統</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 
     <style>
-        body { margin: 0; background-color: #1a1a1a; font-family: sans-serif; color: white; overflow: hidden; }
+        body { margin: 0; background-color: #1a1a1a; font-family: "Microsoft JhengHei", sans-serif; color: white; overflow: hidden; }
         
         model-viewer {
             width: 100%;
@@ -16,7 +16,34 @@
             background-color: #222;
         }
 
-        /* 標註點樣式 */
+        /* 介面標題與按鈕區 */
+        .header-ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none; /* 防止擋住後方操作 */
+        }
+
+        .header-ui * { pointer-events: auto; } /* 恢復按鈕可點擊 */
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 4px;
+            color: #333;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 12px;
+            padding: 10px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+
+        .btn-reset:hover { background: #fff; transform: scale(1.05); }
+
+        /* 標註點 (Hotspot) 樣式 */
         .Hotspot {
             background: #fff;
             border-radius: 32px;
@@ -27,7 +54,10 @@
             width: 24px;
             padding: 8px;
             position: relative;
+            transition: transform 0.3s;
         }
+        
+        .Hotspot:hover { transform: scale(1.2); }
 
         .HotspotAnnotation {
             background: #fff;
@@ -38,54 +68,34 @@
             font-size: 14px;
             font-weight: 700;
             left: calc(100% + 12px);
-            padding: 0.5em 1em;
+            padding: 6px 12px;
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
             width: max-content;
+            pointer-events: none; /* 防止點到文字 */
         }
-
-        /* 介面按鈕樣式 */
-        .header-title {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-        }
-
-        .btn-ui {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 4px;
-            color: #333;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            margin-top: 10px;
-            padding: 8px 16px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .btn-ui:hover { background: #fff; }
 
         #ar-button {
             background-color: #fff;
             border-radius: 4px;
             border: none;
             position: absolute;
-            bottom: 16px;
-            right: 16px;
-            padding: 10px 20px;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
             color: #4285f4;
+            font-weight: bold;
             cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body>
 
-    <div class="header-title">
+    <div class="header-ui">
         <h2 style="margin:0; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">隧道工程三維展示模型</h2>
-        <button class="btn-ui" onclick="resetView()">顯示全貌 / 重置視角</button>
+        <button class="btn-reset" onclick="resetView()">顯示全貌 / 重置視角</button>
     </div>
 
     <model-viewer 
@@ -93,36 +103,6 @@
         src="Tunnel.glb" 
         camera-controls 
         enable-pan
-        /* 限制縮放，防止滾輪滾過頭進入模型內部 */
-        min-camera-orbit="auto auto 0.5m" 
-        /* 允許退得足夠遠來看全貌 */
-        max-camera-orbit="auto auto 2000m"
-        /* 降低靈敏度，防止滾輪反應過於激烈 */
-        orbit-sensitivity="0.6"
-        /* 增加平移速度，適合大地尺度模型 */
-        pan-sensitivity="20"
-        interpolation-decay="100"
-        field-of-view="auto"
-        tone-mapping="neutral" 
-        shadow-intensity="1">
-
-        <button class="Hotspot" slot="hotspot-1" data-position="4946.345m -587.935m -6034.207m" data-normal="-0.485m 0.773m -0.407m">
-            <div class="HotspotAnnotation">處置隧道</div>
-        </button>
-
-        <button class="Hotspot" slot="hotspot-2" data-position="4943.630m -593.017m -6154.503m" data-normal="0.633m 0.0001m -0.773m">
-            <div class="HotspotAnnotation">緊急隧道</div>
-        </button>
-
-        <button class="Hotspot" slot="hotspot-3" data-position="4894.773m -594.011m -5806.110m" data-normal="-0.613m -0.002m -0.789m">
-            <div class="HotspotAnnotation">處置孔</div>
-        </button>
-
-        <button slot="ar-button" id="ar-button">在您的空間中查看 (AR)</button>
-    </model-viewer>
-
-    <script>
-        const modelViewer = document.querySelector("#tunnel-viewer");
-        const hotspots = document.querySelectorAll(".Hotspot");
-
-        // 點擊標註點：
+        
+        /* --- 核心設定：解決初始局部檢視問題 --- */
+        /* 指定
