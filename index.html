@@ -104,21 +104,17 @@
         camera-controls 
         enable-pan
         
-        /* --- 核心設定：解決初始局部檢視問題 --- */
-        /* 指定初始相機目標點為隧道中心坐標 */
-        camera-target="auto auto auto"
-        /* 全部設為 auto，讓系統自己抓模型位置 */
-        camera-orbit="auto auto auto"
-        /* 增加視野寬度，改善長條模型觀看效果 */
-        field-of-view="auto"
-
-        /* 暫時移除縮放限制，避免干擾 */
-        min-camera-orbit="auto auto auto" 
+        /* --- 關鍵修正：讓縮放可以靠得極近 --- */
+        /* 第一、二個參數 auto 代表不限制旋轉角度 */
+        /* 第三個參數 0.1m 代表可以縮放到離目標點僅 10 公分 */
+        min-camera-orbit="auto auto 0.1m" 
+    
+        /* 這裡維持 auto 確保能看到全貌 */
         max-camera-orbit="auto auto auto"
-        orbit-sensitivity="0.6"
-        pan-sensitivity="15"
+        camera-target="auto auto auto"
+        camera-orbit="auto auto auto"
+    
         interpolation-decay="100"
-        
         tone-mapping="neutral" 
         shadow-intensity="1">
 
