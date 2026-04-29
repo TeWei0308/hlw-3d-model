@@ -106,17 +106,17 @@
         
         /* --- 核心設定：解決初始局部檢視問題 --- */
         /* 指定初始相機目標點為隧道中心坐標 */
-        camera-target="4940m -590m -6000m"
-        /* 設定初始視角與距離 (auto 代表拉遠到看見全體) */
-        camera-orbit="45deg 75deg auto"
+        camera-target="auto auto auto"
+        /* 全部設為 auto，讓系統自己抓模型位置 */
+        camera-orbit="auto auto auto"
         /* 增加視野寬度，改善長條模型觀看效果 */
         field-of-view="auto"
 
-        /* --- 縮放與靈敏度優化 --- */
-        min-camera-orbit="auto auto 0.5m" 
-        max-camera-orbit="auto auto 3000m"
-        orbit-sensitivity="0.6"
-        pan-sensitivity="15"
+        /* 暫時移除縮放限制，避免干擾 */
+        min-camera-orbit="auto auto auto" 
+        max-camera-orbit="auto auto auto"
+        /* orbit-sensitivity="0.6" */
+        /* pan-sensitivity="15" */
         interpolation-decay="100"
         
         tone-mapping="neutral" 
